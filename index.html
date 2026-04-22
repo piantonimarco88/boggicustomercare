@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boggi Milano — CC Conversion Tool</title>
+
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --surface: #ede8de;
+    --surface2: #e3ddd2;
+    --border: #c8bfaf;
+    --border2: #d8d0c4;
+    --accent: #3a4a3c;
+    --accent2: #5a6e5c;
+    --text: #2a2e28;
+    --text2: #5a5a50;
+    --text3: #8a8880;
+    --green: #4a7a5a;
+    --red: #8a3a2a;
+    --blue: #3a5a7a;
+    --radius: 2px;
+    --font-main: 'Gotham Book', 'Gill Sans', 'Century Gothic', 'Trebuchet MS', sans-serif;
+    --font-display: 'Gotham Book', 'Gill Sans', 'Century Gothic', 'Trebuchet MS', sans-serif;
+    --font-mono: 'Gotham Book', 'Gill Sans', 'Century Gothic', 'Trebuchet MS', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    border-top: 3px solid var(--accent);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+  .header-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+  }
+  .header-logo {
+    height: 72px;
+    width: auto;
+    display: block;
+    mix-blend-mode: multiply;
+  }
+  .header-subtitle {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text3);
+    font-family: var(--font-main);
+  }
+  .version { color: var(--text3); font-size: 10px; position: absolute; right: 32px; }
+
+  /* TABS */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    background: var(--bg);
+  }
+  .tab {
+    padding: 14px 20px;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+  .tab-icon { font-size: 13px; margin-right: 5px; opacity: 0.7; }
+
+  /* MAIN CONTENT */
+  .content { padding: 32px; }
+
+  /* IMPORT PANEL */
+  .import-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .import-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .import-card:hover { border-color: var(--accent); }
+  .import-card.loaded { border-color: var(--green); }
+  .import-card.loaded .card-icon { color: var(--green); }
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .card-desc { font-size: 11px; color: var(--text3); line-height: 1.5; margin-bottom: 16px; }
+  .card-icon { font-size: 28px; margin-bottom: 10px; color: var(--accent2); }
+  .card-status { font-size: 11px; color: var(--text3); margin-top: 8px; min-height: 16px; }
+  .card-status.ok { color: var(--green); }
+  .card-status.err { color: var(--red); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text2);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn:hover { border-color: var(--accent2); color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #f5f0e8; font-weight: 500; }
+  .btn.primary:hover { background: var(--accent2); }
+  .btn.danger { border-color: var(--red); color: var(--red); }
+  .btn.danger:hover { background: #cc665520; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  input[type="file"] { display: none; }
+
+  /* CONFIG ROW */
+  .config-row {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .config-row label { font-size: 11px; color: var(--text2); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
+  .config-row input[type="number"] {
+    width: 60px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 5px 10px;
+    text-align: center;
+  }
+  .config-row input[type="number"]:focus { outline: none; border-color: var(--accent); }
+  .field-group { display: flex; align-items: center; gap: 10px; }
+
+  /* RUN BUTTON */
+  .run-section { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
+  .run-info { font-size: 11px; color: var(--text3); }
+
+  /* PROGRESS */
+  #progressBar {
+    height: 2px;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s;
+    margin-bottom: 24px;
+    border-radius: 1px;
+  }
+
+  /* RESULTS */
+  .results-hidden { display: none; }
+
+  /* STAT CARDS */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .stat-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text2); margin-bottom: 8px; font-weight: 600; }
+  .stat-value {
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-value.accent { color: var(--accent2); }
+  .stat-value.green { color: var(--green); }
+  .stat-sub { font-size: 11px; color: var(--text2); margin-top: 6px; }
+
+  /* ANALYSIS SECTION */
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-title .filter-row { display: flex; gap: 10px; align-items: center; }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  select, .filter-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 7px 12px;
+  }
+  select:focus, .filter-input:focus { outline: none; border-color: var(--accent); }
+  option { background: var(--surface2); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; margin-bottom: 32px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  thead th {
+    background: var(--surface2);
+    color: var(--text2);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    white-space: nowrap;
+    user-select: none;
+  }
+  thead th:hover { color: var(--accent); }
+  thead th.sorted { color: var(--accent); }
+  tbody tr { border-bottom: 1px solid #1a1a18; transition: background 0.1s; }
+  tbody tr:hover { background: var(--surface); }
+  tbody td { padding: 10px 14px; color: var(--text2); vertical-align: middle; }
+  tbody td.hl { color: var(--text); }
+  tbody td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody td.pct { text-align: right; }
+  .pct-bar {
+    display: inline-block;
+    height: 3px;
+    background: var(--accent2);
+    border-radius: 2px;
+    margin-top: 4px;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+  }
+  .badge-web { background: #3a5a7a18; color: var(--blue); }
+  .badge-retail { background: #3a4a3c18; color: var(--accent); }
+  .badge-both { background: #4a7a5a18; color: var(--green); }
+
+  /* CHART AREA */
+  .chart-section { margin-bottom: 32px; }
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .chart-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); margin-bottom: 16px; }
+  canvas { max-width: 100%; }
+
+  /* MATCH TABLE */
+  .match-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .search-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 7px 12px;
+    width: 240px;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+
+  /* PAGINATION */
+  .pagination { display: flex; gap: 6px; align-items: center; margin-top: 14px; }
+  .page-btn {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 11px;
+    color: var(--text3);
+    transition: all 0.15s;
+  }
+  .page-btn:hover, .page-btn.active { border-color: var(--accent); color: var(--accent); }
+  .page-info { font-size: 11px; color: var(--text3); margin-left: 8px; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+  .empty-state .big { font-family: var(--font-display); font-size: 48px; opacity: 0.2; margin-bottom: 12px; }
+  .empty-state p { font-size: 12px; }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #f5f0e8;
+    box-shadow: 0 4px 20px rgba(42,46,40,0.15);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-size: 12px;
+    color: var(--text);
+    z-index: 9999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    max-width: 320px;
+  }
+  #toast.show { transform: translateY(0); opacity: 1; }
+  #toast.success { border-color: var(--green); color: var(--green); }
+  #toast.error { border-color: var(--red); color: var(--red); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+
+  #importReport tbody tr { border-bottom: 1px solid var(--border2); }
+  #importReport tbody tr:hover { background: var(--surface); }
+  #importReport tbody td { padding: 7px 10px; color: var(--text2); }
+  #importReport tbody td.num { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+
+  /* INLINE ANALYSIS TABLES */
+  .analysis-section { margin-top: 32px; }
+  .analysis-section .section-title { font-size: 14px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 14px; }
+  .analysis-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 32px; }
+  .analysis-table thead th { background: var(--surface2); color: var(--text2); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .analysis-table thead th.r { text-align: right; }
+  .analysis-table tbody tr { border-bottom: 1px solid #e8e2d8; }
+  .analysis-table tbody tr:hover { background: var(--surface); }
+  .analysis-table tbody td { padding: 9px 12px; color: var(--text2); }
+  .analysis-table tbody td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .analysis-table tbody td.bold { color: var(--text); font-weight: 600; }
+  .analysis-table tfoot td { padding: 9px 12px; font-weight: 700; color: var(--text); background: var(--surface); border-top: 2px solid var(--border); font-size: 12px; }
+  .analysis-table tfoot td.r { text-align: right; font-variant-numeric: tabular-nums; }
+  .conv-bar-wrap { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .conv-bar { height: 4px; background: var(--accent2); border-radius: 2px; min-width: 2px; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .import-grid { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+
+  .sparkline-bar {
+    display: inline-block;
+    width: 100%;
+    height: 28px;
+    position: relative;
+  }
+
+  .sep { width: 1px; background: var(--border); height: 24px; }
+
+  /* Column map modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(42,46,40,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    width: 500px;
+    max-width: 95vw;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .modal-title { font-family: var(--font-display); font-size: 20px; color: var(--accent); margin-bottom: 20px; }
+  .map-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .map-row label { font-size: 11px; color: var(--text3); width: 140px; flex-shrink: 0; }
+  .map-row select { flex: 1; }
+  .modal-footer { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCABQAEYDASIAAhEBAxEB/8QAHAAAAgIDAQEAAAAAAAAAAAAAAAUBBwQGCAID/8QANxAAAQMDAQMKBgAGAwAAAAAAAQIDBAAFEQYSIVEHExQWMUFVdJTSCDI1NrGzFRciQmFxdYGh/8QAFgEBAQEAAAAAAAAAAAAAAAAAAAEC/8QAGBEBAQEBAQAAAAAAAAAAAAAAAAERMQL/2gAMAwEAAhEDEQA/AOvLzdWbZ0cLYkvuSHC202w1tqJCSo/6GAaw+sCvA716Ue6pvv16w+Zd/Q5TrA4UQk6wK8DvXpR7qOsCvA716Ue6neBwowOFFJOsCvA716Ue6jrArwO9elHup3gcKMDhQJOsCvA716Ue6jrArwO9elHup3gcKggcKD4WyazcbdHnR9vmX20uI207KsEZ3juNFLtEfaNq8qj8UUEXz69YfMu/ocp1SW+fXrD5l39DlOqAqj/iX1rrbk9RbrrYbzEMSfIUwYsiAlZaKUbWQvIJBwdx41eFc6/HJ9qab/5Jz9Joz64aTNW8o8HkRicpjF+ts10xGZcm3v2wJbKFKAUEqQsKBGc7+4Gt+5Etft8o2ik3wwuhSmn1RpTIXtJS4kA5Se0pIUCM7xnHdVcXZifJ+C6G3BCVAWWO5JH9xYSpKnNnuCtkHGd3bWz/AAuXLRcrk5ELR7cxjoj56e1MUFP8+sZ21FP9JBAGCMDCcYGDRJ1bFBooNGybRH2javKo/FFGiPtG1eVR+KKERfPr1h8y7+hynVJb59esPmXf0OU0mSo0Ngvy5DMdoEArdWEpGf8AJ3UH2rnr4vYN61PEs9l09pu+3N+FLU/Icj29xTSUlvAAXjCjv7s4wc1f0OZEmIK4kpiQhJwVNOBYB/6rzEuECW641Emxn3G/nS06lRTvxvAO6iWbFGIn3xj4co+irfpHUsjUDtnFuUwq1utNtKUnZWpTiwEYAJ7CcnFOvhf5MrtyfWG5Sr+ttFyuq2yqM2vbDCGwrZBUNxUSok4yBuGTVsP3G3syRFemxm3yNoNrdSFY44Jz3V7mTIkJtLkuUxHQo7KVOuBAJ4ZNDH3oNYr9yt7DSHXp0VptZIQpbyQFY7cEnfWSCFJCkkEHeCKKT6I+0bV5VH4oo0R9o2ryqPxRQiL59esPmXf0OVrfxEc3/JLVqXNk7dsdSkKGdpRG4Ad5z2Vsl8+vWHzLv6HKdEA9ozRHM1zZu78LWbekIkx+4SND24JlQVEIQpAwtjAGFPlBWQQdoDdgbidrunRZeoOSXqTzRdjrzI6IAOat3MAOpdx8qSrZACv7xu3ireKrsm9htDET+Flokr2iHQ5wx2Y/zXnFxaiz3GYkNMouKMcA4Dg3bJWePbRMUlp2amycmOsEapsjF71Iq+SemWyUrD89S3AGA3/SVEFBRsFIwANxGDjZEOzmuXhNy1UyzEiPaYQm18+4DHZkc4DJbCyMbfy5O4lI4A1Z8zpQXFdjRGHFlxKXi4rCm2z8xScbyN27v31DqZjly5txmK5bizklWS4HQeHYU47+0Ed+dwxQOvLlGunJbpySdOxLDC67R1Q2AraQ8yJCiuQkKSnZQslSuzGyQew10SgpKAUkFJ7MdmKxIP8AEFvyhPYjJaS4RHLaiVKRv+bPYcY/94ZOb3UWQm0R9o2ryqPxRRoj7RtXlUfiiixF9+vWHzLv6HKdZHGsC82pm59HK35LDkdwuNOMO7CgSkpP+xgmsPq+rxy9eqHtoh3kcaMjjSTq+rxy9eqHto6vq8cvXqh7aKd5HGjI40k6vq8cvXqh7aOr6vHL16oe2gd5HGoJHGkvV9Xjl69UPbR1fV45evVD20HrRH2javKo/FFMbZCZt1ujwY+3zLDaW0batpWAMbz3mig//9k=" alt="Boggi Milano" class="header-logo">
+    <div class="header-subtitle">Customer Care · Conversion Tool</div>
+  </div>
+  <div class="version">v1.0</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab('import')"><span class="tab-icon">↑</span><strong>Import</strong></div>
+  <div class="tab" onclick="showTab('analysis')" id="tab-analysis"><span class="tab-icon">◎</span><strong>Analisi Operatori</strong></div>
+  <div class="tab" onclick="showTab('monthly')" id="tab-monthly"><span class="tab-icon">▦</span><strong>Andamento Mensile</strong></div>
+  <div class="tab" onclick="showTab('matches')" id="tab-matches"><span class="tab-icon">≡</span><strong>Dettaglio Match</strong></div>
+</div>
+
+<div id="toast"></div>
+
+<!-- COLUMN MAP MODAL -->
+<div class="modal-overlay" id="mapModal">
+  <div class="modal">
+    <div class="modal-title">Mappa Colonne</div>
+    <div id="mapRows"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Annulla</button>
+      <button class="btn primary" onclick="confirmMapping()">Conferma</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: IMPORT -->
+<div id="pane-import" class="content">
+  <div class="import-grid">
+
+    <div class="import-card" id="card-cc">
+      <div class="card-icon">📋</div>
+      <div class="card-label">File 1</div>
+      <div class="card-title">Contatti Customer Care</div>
+      <div class="card-desc">Export CRM con i casi aperti. Deve contenere: email cliente, data contatto, operatore, canale.</div>
+      <button class="btn" onclick="triggerFile('cc')">↑ Carica file (CSV/XLSX)</button>
+      <input type="file" id="file-cc" accept=".csv,.xlsx,.xls" onchange="loadFile('cc', this)">
+      <div class="card-status" id="status-cc">—</div>
+    </div>
+
+
+
+    <div class="import-card" id="card-ecom">
+      <div class="card-icon">🛍️</div>
+      <div class="card-label">File 2</div>
+      <div class="card-title">Vendite (Retail + DSS + Ecom)</div>
+      <div class="card-desc">File unico con tutte le vendite. Deve contenere: email cliente, data, importo.</div>
+      <button class="btn" onclick="triggerFile('ecom')">↑ Carica file (CSV/XLSX)</button>
+      <input type="file" id="file-ecom" accept=".csv,.xlsx,.xls" onchange="loadFile('ecom', this)">
+      <div class="card-status" id="status-ecom">—</div>
+    </div>
+
+  </div>
+
+  <div class="config-row">
+    <div class="field-group">
+      <label>Finestra di conversione</label>
+      <input type="number" id="convDays" value="14" min="1" max="90">
+      <label>giorni</label>
+    </div>
+    <div class="sep"></div>
+    <div class="field-group">
+      <label>Periodo:</label>
+      <span id="periodLabel" style="font-size:12px;color:var(--text2);font-family:var(--font-mono);">— carica il file CC —</span>
+    </div>
+  </div>
+
+  <div class="run-section">
+    <button class="btn primary" id="btnRun" onclick="runMatching()" disabled>▶ Esegui Matching</button>
+    <button class="btn danger" id="btnReset" onclick="confirmReset()" >⟳ Reset Tutto</button>
+    <span class="run-info" id="runInfo">Carica i file per procedere</span>
+  </div>
+
+  <!-- Reset confirm modal -->
+  <div class="modal-overlay" id="resetModal">
+    <div class="modal" style="width:380px">
+      <div class="modal-title" style="color:var(--red)">Reset completo</div>
+      <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:20px">
+        Verranno eliminati tutti i dati importati (file vendite), tutti i risultati di matching e le analisi.<br><br>
+        <strong style="color:var(--text)">I casi Customer Care pre-caricati verranno ripristinati automaticamente.</strong>
+      </p>
+      <div class="modal-footer">
+        <button class="btn" onclick="document.getElementById('resetModal').classList.remove('open')">Annulla</button>
+        <button class="btn danger" onclick="doReset()">⟳ Conferma Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="progressBar"></div>
+
+  <div id="quickStats" class="results-hidden">
+    <div class="stat-grid" id="statGrid"></div>
+    <div id="analysisBlock"></div>
+  </div>
+</div>
+
+<!-- TAB: ANALYSIS -->
+<div id="pane-analysis" class="content" style="display:none">
+  <div class="section-title">
+    Performance per Operatore
+    <div class="filter-row">
+      <select id="anaChannel" onchange="renderAnalysis()">
+        <option value="">Tutti i canali</option>
+      </select>
+      <select id="anaPeriod" onchange="renderAnalysis()">
+        <option value="">Tutti i mesi</option>
+      </select>
+      <button class="btn" onclick="exportAnalysis()">↓ Esporta CSV</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="tblAnalysis">
+      <thead>
+        <tr>
+          <th onclick="sortTable('analysis','operator')" style="width:180px">Operatore ↕</th>
+          <th onclick="sortTable('analysis','contacts')" class="num" style="width:90px">Contatti ↕</th>
+          <th onclick="sortTable('analysis','transactions')" class="num" style="width:110px">Transazioni ↕</th>
+          <th onclick="sortTable('analysis','convRate')" class="num" style="width:130px">Conv. % ↕</th>
+          <th onclick="sortTable('analysis','revenue')" class="num" style="width:140px">Fatturato € ↕</th>
+          <th onclick="sortTable('analysis','avgOrder')" class="num" style="width:140px">Scontrino Medio ↕</th>
+
+        </tr>
+      </thead>
+      <tbody id="tbodyAnalysis"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TAB: MONTHLY -->
+<div id="pane-monthly" class="content" style="display:none">
+  <div class="section-title">
+    Andamento Mensile
+    <div class="filter-row">
+      <select id="monOperator" onchange="renderMonthly()">
+        <option value="">Tutti gli operatori</option>
+      </select>
+      <select id="monChannel" onchange="renderMonthly()">
+        <option value="">Tutti i canali</option>
+      </select>
+    </div>
+  </div>
+  <div class="charts-grid" style="margin-bottom:24px">
+    <div class="chart-box">
+      <div class="chart-title">Contatti vs Conversioni per mese</div>
+      <canvas id="chartMonthly" height="220"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">Fatturato mensile (€)</div>
+      <canvas id="chartRevenue" height="220"></canvas>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="tblMonthly">
+      <thead>
+        <tr>
+          <th style="width:120px">Mese</th>
+          <th class="num" style="width:90px">Contatti</th>
+          <th class="num" style="width:110px">Transazioni</th>
+          <th class="num" style="width:90px">Conv. %</th>
+          <th class="num" style="width:140px">Fatturato €</th>
+          <th class="num" style="width:140px">Scontrino Medio</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyMonthly"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TAB: MATCHES -->
+<div id="pane-matches" class="content" style="display:none">
+  <div class="section-title">Dettaglio Match</div>
+  <div class="match-controls">
+    <input type="text" class="search-input" id="matchSearch" placeholder="Cerca email, operatore, ordine…" oninput="filterMatches()">
+    <select id="matchOp" onchange="filterMatches()"><option value="">Tutti gli operatori</option></select>
+    <select id="matchChan" onchange="filterMatches()"><option value="">Tutti i canali</option></select>
+    <select id="matchType" onchange="filterMatches()">
+      <option value="">Tutti</option>
+      <option value="matched">Solo con acquisto</option>
+      <option value="unmatched">Solo senza acquisto</option>
+    </select>
+    <button class="btn" onclick="exportMatches()">↓ Esporta CSV</button>
+    <span style="color:var(--text3);font-size:11px;margin-left:auto" id="matchCount"></span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Data Contatto</th>
+          <th>Operatore</th>
+          <th>Canale</th>
+          <th>Email Cliente</th>
+          <th>Case N.</th>
+          <th class="num">Acquisti</th>
+          <th class="num">Fatturato €</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyMatches"></tbody>
+    </table>
+  </div>
+  <div class="pagination" id="matchPagination"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js">
+// ─── PRELOADED SALESFORCE DATA ────────────────────────────────────────────────
+
+
+
+
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js">
+// ─── PRELOADED SALESFORCE DATA ────────────────────────────────────────────────
+
+
+
+
+
+</script>
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const state = {
+  files: { cc: null, retail: null, ecom: null },
+  colMaps: { cc: {}, retail: {}, ecom: {} },
+  results: null,
+  sortState: {},
+  matchPage: 1,
+  matchFiltered: [],
+  charts: {}
+};
+
+// Required columns per file type
+const REQUIRED_COLS = {
+  cc: { email: 'Email cliente', date: 'Data contatto', operator: 'Operatore', channel: 'Canale', caseNum: 'N. Case (opz.)' },
+  retail: { email: 'Email cliente', date: 'Data ordine', order: 'N. Ordine (opz.)', amount: 'Importo €' },
+  ecom: { email: 'Email cliente', date: 'Data ordine', order: 'N. Ordine (opz.)', amount: 'Importo €' }
+};
+
+let pendingMapType = null;
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function showTab(name) {
+  ['import','analysis','monthly','matches'].forEach(t => {
+    document.getElementById('pane-'+t).style.display = t===name ? '' : 'none';
+    const tab = document.querySelector(`.tab:nth-child(${['import','analysis','monthly','matches'].indexOf(t)+1})`);
+  });
+  document.querySelectorAll('.tab').forEach((el,i) => {
+    el.classList.toggle('active', ['import','analysis','monthly','matches'][i]===name);
+  });
+  if (name==='analysis' && state.results) renderAnalysis();
+  if (name==='monthly' && state.results) renderMonthly();
+  if (name==='matches' && state.results) filterMatches();
+}
+
+// ─── FILE LOADING ─────────────────────────────────────────────────────────────
+function triggerFile(type) {
+  document.getElementById('file-'+type).click();
+}
+
+function loadFile(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      let rows;
+      if (file.name.endsWith('.csv')) {
+        rows = parseCSV(e.target.result);
+      } else {
+        const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        // Use raw header row to preserve exact column names (avoids XLSX renaming duplicates)
+        const raw = XLSX.utils.sheet_to_json(ws, {header:1, raw:false, dateNF:'yyyy-mm-dd'});
+        if (!raw || raw.length < 2) { showToast('File vuoto o non leggibile','error'); return; }
+
+        // Find the real header row: first row where at least 3 cells are non-empty strings
+        // This skips any title/subtitle rows that precede the actual column headers
+        let headerRowIdx = 0;
+        for (let i = 0; i < Math.min(raw.length, 10); i++) {
+          const nonEmpty = (raw[i] || []).filter(c => c !== null && c !== undefined && String(c).trim() !== '').length;
+          if (nonEmpty >= 3) { headerRowIdx = i; break; }
+        }
+        const headers = (raw[headerRowIdx] || []).map(h => String(h || '').trim());
+        rows = raw.slice(headerRowIdx + 1)
+          .filter(r => {
+            // Skip repeated header rows (where first cell equals the header value)
+            const firstCell = String(r[0] || '').trim();
+            return firstCell !== headers[0] && firstCell !== '';
+          })
+          .map(r => {
+            const obj = {};
+            headers.forEach((h, i) => { if (h) obj[h] = r[i] !== undefined ? String(r[i]) : ''; });
+            return obj;
+          }).filter(r => Object.values(r).some(v => v && v.trim()));
+      }
+      if (!rows || rows.length===0) { showToast('File vuoto o non leggibile','error'); return; }
+
+      // For CC files: filter rows with valid email AND allowed Reason Case
+      if (type === 'cc') {
+        const CC_ALLOWED_REASONS = new Set([
+          'Info su abbinamenti',
+          'Info su disponibilità',
+          'Info su misura',
+          'Info su taglie/vestibilità',
+          'Suggerimenti per l?acquisto/alternative',
+          "Suggerimenti per l'acquisto/alternative",
+          'Up selling/cross selling',
+          'Info su prodotto'
+        ]);
+        // Find email and reason columns (case-insensitive key search)
+        const emailKey = Object.keys(rows[0]).find(k => k.toLowerCase() === 'contact: email' || k.toLowerCase() === 'contact:email' || k.toLowerCase().includes('email'));
+        const reasonKey = Object.keys(rows[0]).find(k => k.toLowerCase() === 'reason case' || k.toLowerCase().includes('reason case'));
+        const totalRows = rows.length;
+        let skipEmail = 0, skipReason = 0;
+        if (emailKey) {
+          rows = rows.filter(r => {
+            const email = (r[emailKey] || '').trim();
+            if (!email) { skipEmail++; return false; }
+            if (reasonKey) {
+              const reason = (r[reasonKey] || '').trim();
+              if (!CC_ALLOWED_REASONS.has(reason)) { skipReason++; return false; }
+            }
+            return true;
+          });
+        }
+        if (rows.length === 0) { showToast('Nessuna riga valida trovata nel file CC','error'); return; }
+        const parts = [];
+        if (skipEmail > 0) parts.push(`${skipEmail} senza email`);
+        if (skipReason > 0) parts.push(`${skipReason} reason non inclusa`);
+        const detail = parts.length ? ` — esclusi: ${parts.join(', ')}` : '';
+        showToast(`✓ ${rows.length.toLocaleString('it')} casi importati${detail}`, 'success');
+      }
+
+      // For sales file: filter rows with valid email only
+      if (type === 'ecom') {
+        const cols0 = Object.keys(rows[0]);
+        const emailKey2 = cols0.find(k => ['personal_email','billing email','customer email'].includes(k.toLowerCase())) ||
+                          cols0.find(k => k.toLowerCase().includes('email'));
+        const totalE = rows.length;
+        let skipEml = 0;
+        if (emailKey2) {
+          rows = rows.filter(r => {
+            const email = (r[emailKey2] || '').trim();
+            if (!email) { skipEml++; return false; }
+            return true;
+          });
+        }
+        if (rows.length === 0) { showToast('Nessuna riga valida trovata nel file Vendite','error'); return; }
+        const eDetail = skipEml > 0 ? ` — esclusi: ${skipEml} senza email` : '';
+        showToast(`✓ ${rows.length.toLocaleString('it')} vendite importate${eDetail}`, 'success');
+      }
+
+      state.files[type] = rows;
+      showMapModal(type, Object.keys(rows[0]));
+    } catch(err) {
+      showToast('Errore lettura file: '+err.message,'error');
+    }
+  };
+  if (file.name.endsWith('.csv')) reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+function parseCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l=>l.trim());
+  if (lines.length<2) return [];
+  const sep = lines[0].includes(';') ? ';' : ',';
+  const headers = lines[0].split(sep).map(h=>h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(l => {
+    const vals = l.split(sep).map(v=>v.trim().replace(/^"|"$/g,''));
+    const obj = {};
+    headers.forEach((h,i) => obj[h] = vals[i]||'');
+    return obj;
+  });
+}
+
+// ─── COLUMN MAPPING MODAL ─────────────────────────────────────────────────────
+function showMapModal(type, cols) {
+  pendingMapType = type;
+  const req = REQUIRED_COLS[type];
+
+  // Auto-detect columns
+  const autoMap = autoDetect(type, cols);
+
+  // Check if all required (non-optional) fields are auto-detected
+  const requiredKeys = Object.keys(req).filter(k => k !== 'caseNum' && k !== 'order');
+  const allDetected = requiredKeys.every(k => autoMap[k]);
+
+  if (allDetected) {
+    // Skip modal — apply mapping directly
+    state.colMaps[type] = {};
+    Object.keys(req).forEach(k => { if (autoMap[k]) state.colMaps[type][k] = autoMap[k]; });
+    pendingMapType = null;
+    markLoaded(type);
+    if (type === 'cc') updatePeriodLabel();
+    checkReady();
+    return;
+  }
+
+  // Otherwise show modal for manual mapping
+  const container = document.getElementById('mapRows');
+  container.innerHTML = '';
+
+  Object.entries(req).forEach(([key, label]) => {
+    const row = document.createElement('div');
+    row.className = 'map-row';
+    const lbl = document.createElement('label');
+    lbl.textContent = label + (key==='caseNum'||key==='order' ? '' : ' *');
+    const sel = document.createElement('select');
+    sel.id = 'map_'+key;
+    sel.innerHTML = '<option value="">— non presente —</option>' +
+      cols.map(c => `<option value="${c}" ${autoMap[key]===c?'selected':''}>${c}</option>`).join('');
+    row.appendChild(lbl);
+    row.appendChild(sel);
+    container.appendChild(row);
+  });
+
+  document.getElementById('mapModal').classList.add('open');
+}
+
+function autoDetect(type, cols) {
+  const lc = c => c.toLowerCase();
+  // exact: tries exact case-insensitive match first, then falls back to includes
+  const exact = (patterns) => cols.find(c => patterns.some(p => lc(c) === p.toLowerCase())) || '';
+  const match = (patterns) => cols.find(c => patterns.some(p => lc(c).includes(p))) || '';
+  const exactOrMatch = (exactPatterns, includePatterns) => exact(exactPatterns) || match(includePatterns);
+  const maps = {
+    cc: {
+      email: exactOrMatch(['contact: email','contact:email'], ['contact: email','contact:email','e-mail']),
+      date: exactOrMatch(['opened date'], ['opened date','data contatto','date opened','aperto']),
+      operator: exactOrMatch(['case owner'], ['case owner','operatore','owner','operator','assigned']),
+      channel: exactOrMatch(['case origin'], ['case origin','canale','channel','origin']),
+      caseNum: exactOrMatch(['case number'], ['case number','case num','n. case'])
+    },
+    retail: {
+      email: exactOrMatch(['customer email','billing email','email'], ['customer email','billing email','e-mail','email','mail']),
+      date: exactOrMatch(['calendar.t_day','order date','data ordine'], ['calendar.t_day','t_day','order date','data ordine','data','date']),
+      order: exactOrMatch(['order number','order num'], ['order number','ordine','order num','n. ordine','order id','transaction']),
+      amount: exactOrMatch(['gross sales after returns 2026','gross sales after returns'], ['gross sales','net total','total eur','importo','amount','euro','valore','price','sales'])
+    },
+    ecom: {
+      email: exactOrMatch(['personal_email','billing email','customer email'], ['personal_email','billing email','customer email','e-mail','email','mail']),
+      date: exactOrMatch(['t_day','order date'], ['t_day','calendar.t_day','order date','data ordine','data','date']),
+      order: exactOrMatch(['order number'], ['order number','ordine','order num','transaction']),
+      amount: exactOrMatch(['gross_sales','gross sales after returns'], ['gross_sales','gross sales','net total eur','importo','amount','valore','price'])
+    }
+  };
+  return maps[type];
+}
+
+function confirmMapping() {
+  const type = pendingMapType;
+  const req = REQUIRED_COLS[type];
+  const map = {};
+  let missing = [];
+  Object.keys(req).forEach(key => {
+    const val = document.getElementById('map_'+key).value;
+    if (val) map[key] = val;
+    else if (key !== 'caseNum' && key !== 'order') missing.push(req[key]);
+  });
+  if (missing.length) { showToast('Campi obbligatori mancanti: '+missing.join(', '),'error'); return; }
+  state.colMaps[type] = map;
+  closeModal();
+  markLoaded(type);
+  if (type === 'cc') updatePeriodLabel();
+  checkReady();
+}
+
+function closeModal() {
+  document.getElementById('mapModal').classList.remove('open');
+}
+
+function markLoaded(type) {
+  const card = document.getElementById('card-'+type);
+  card.classList.add('loaded');
+  const st = document.getElementById('status-'+type);
+  st.className = 'card-status ok';
+  st.textContent = `✓ ${state.files[type].length.toLocaleString('it')} righe caricate`;
+}
+
+function checkReady() {
+  const ccOk = state.files.cc && state.colMaps.cc.email;
+  const salesOk = state.files.ecom && state.colMaps.ecom.email;
+  const btn = document.getElementById('btnRun');
+  btn.disabled = !(ccOk && salesOk);
+  if (ccOk && salesOk) document.getElementById('runInfo').textContent = 'Pronto per il matching';
+}
+
+// ─── DATE PARSING ─────────────────────────────────────────────────────────────
+function parseDate(val) {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val) ? null : val;
+  // Excel serial number (number as string or actual number)
+  const num = Number(val);
+  if (!isNaN(num) && num > 40000 && num < 60000) {
+    // Excel epoch
+    const d = new Date((num - 25569) * 86400 * 1000);
+    return isNaN(d) ? null : d;
+  }
+  const s = String(val).trim();
+  // Try ISO
+  let d = new Date(s);
+  if (!isNaN(d)) return d;
+  // DD/MM/YYYY or DD-MM-YYYY
+  const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+  if (m) {
+    const yr = m[3].length===2 ? '20'+m[3] : m[3];
+    d = new Date(`${yr}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`);
+    return isNaN(d) ? null : d;
+  }
+  return null;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return d.toLocaleDateString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+function monthKey(d) {
+  return d ? `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` : null;
+}
+
+const MONTH_NAMES = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+
+// ─── MATCHING ALGORITHM ───────────────────────────────────────────────────────
+function runMatching() {
+  const days = parseInt(document.getElementById('convDays').value) || 14;
+
+  // Derive period automatically from CC data dates
+  const fromDate = null;  // no filter — use all dates from the file
+  const toDate = null;
+
+  setProgress(10);
+
+  // Build CC records
+  const ccMap = state.colMaps.cc;
+  let ccRows = state.files.cc.map(r => ({
+    email: (r[ccMap.email]||'').toLowerCase().trim(),
+    date: parseDate(r[ccMap.date]),
+    operator: r[ccMap.operator]||'Unknown',
+    channel: r[ccMap.channel]||'—',
+    caseNum: ccMap.caseNum ? (r[ccMap.caseNum]||'') : ''
+  })).filter(r => r.email && r.date);
+
+  // Filter by period
+  if (fromDate) ccRows = ccRows.filter(r => r.date >= fromDate);
+  if (toDate) ccRows = ccRows.filter(r => r.date < toDate);
+
+  setProgress(30);
+
+  // Build sales index: email → [{date, amount, order, source}]
+  const salesIndex = {};
+  const addSales = (rows, map, source) => {
+    rows.forEach(r => {
+      const email = (r[map.email]||'').toLowerCase().trim();
+      const date = parseDate(r[map.date]);
+      const amount = parseFloat(String(r[map.amount]||'0').replace(',','.').replace(/[^\d.]/g,'')) || 0;
+      const order = map.order ? (r[map.order]||'') : '';
+      if (!email || !date) return;
+      if (!salesIndex[email]) salesIndex[email] = [];
+      salesIndex[email].push({date, amount, order, source});
+    });
+  };
+  if (state.files.ecom && state.colMaps.ecom.email) addSales(state.files.ecom, state.colMaps.ecom, 'ecom');
+
+  setProgress(60);
+
+  // Match
+  const results = ccRows.map(cc => {
+    const sales = salesIndex[cc.email] || [];
+    const msLimit = days * 86400000;
+    const matched = sales.filter(s => {
+      const diff = s.date - cc.date;
+      return diff >= 0 && diff <= msLimit;
+    });
+    const totalAmount = matched.reduce((a,s) => a+s.amount, 0);
+    const retailMatches = matched.filter(s=>s.source==='retail');
+    const ecomMatches = matched.filter(s=>s.source==='ecom');
+    return {
+      ...cc,
+      matched,
+      totalAmount,
+      retailCount: retailMatches.length,
+      ecomCount: ecomMatches.length,
+      month: monthKey(cc.date)
+    };
+  });
+
+  setProgress(90);
+
+  state.results = results;
+  computeAndRender(results);
+  setProgress(100);
+  setTimeout(() => setProgress(0), 800);
+
+  document.getElementById('quickStats').classList.remove('results-hidden');
+  document.getElementById('btnReset').style.display = '';
+  showToast(`Matching completato: ${results.length.toLocaleString('it')} contatti analizzati`, 'success');
+
+  // Populate filter selects
+  const operators = [...new Set(results.map(r=>r.operator))].sort();
+  const channels = [...new Set(results.map(r=>r.channel))].sort();
+  const months = [...new Set(results.map(r=>r.month).filter(Boolean))].sort();
+
+  populateSelect('anaChannel', channels);
+  populateSelect('anaPeriod', months, m => {
+    const [y,mo] = m.split('-');
+    return MONTH_NAMES[parseInt(mo)-1]+' '+y;
+  });
+  populateSelect('monOperator', operators);
+  populateSelect('monChannel', channels);
+  populateSelect('matchOp', operators);
+  populateSelect('matchChan', channels);
+}
+
+function populateSelect(id, values, labelFn) {
+  const sel = document.getElementById(id);
+  const first = sel.options[0].outerHTML;
+  sel.innerHTML = first + values.map(v => `<option value="${v}">${labelFn ? labelFn(v) : v}</option>`).join('');
+}
+
+// ─── COMPUTE STATS ────────────────────────────────────────────────────────────
+function computeAndRender(results) {
+  const totalContacts = results.length;
+  const totalMatched = results.filter(r=>r.matched.length>0).length;
+  const totalTx = results.reduce((a,r)=>a+r.matched.length,0);
+  const totalRev = results.reduce((a,r)=>a+r.totalAmount,0);
+  const convRate = totalContacts>0 ? totalMatched/totalContacts : 0;
+  const avgOrder = totalTx>0 ? totalRev/totalTx : 0;
+
+  document.getElementById('statGrid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">Contatti CC</div>
+      <div class="stat-value">${totalContacts.toLocaleString('it')}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Convertiti</div>
+      <div class="stat-value green">${totalMatched.toLocaleString('it')}</div>
+      <div class="stat-sub">${(convRate*100).toFixed(1)}% conversion rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Transazioni</div>
+      <div class="stat-value">${totalTx.toLocaleString('it')}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Fatturato €</div>
+      <div class="stat-value accent">${fmtEur(totalRev)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Scontrino Medio</div>
+      <div class="stat-value">${fmtEur(avgOrder)}</div>
+    </div>
+  `;
+
+  // ── Build per-month and per-operator analysis ──────────────────────────────
+  const MONTH_NAMES = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+
+  const byMonth = {};
+  const byOp = {};
+
+  results.forEach(r => {
+    const m = r.month || '?';
+    const op = r.operator || 'N/D';
+
+    if (!byMonth[m]) byMonth[m] = {contacts:0, converted:0, tx:0, rev:0};
+    byMonth[m].contacts++;
+    if (r.matched.length > 0) byMonth[m].converted++;
+    byMonth[m].tx += r.matched.length;
+    byMonth[m].rev += r.totalAmount;
+
+    if (!byOp[op]) byOp[op] = {contacts:0, converted:0, tx:0, rev:0};
+    byOp[op].contacts++;
+    if (r.matched.length > 0) byOp[op].converted++;
+    byOp[op].tx += r.matched.length;
+    byOp[op].rev += r.totalAmount;
+  });
+
+  function kpiRow(label, d, maxRev, cls='') {
+    const cr = d.contacts > 0 ? d.converted/d.contacts : 0;
+    const avg = d.tx > 0 ? d.rev/d.tx : 0;
+    const barW = maxRev > 0 ? Math.round((d.rev/maxRev)*80) : 0;
+    return `<tr>
+      <td class="bold ${cls}">${label}</td>
+      <td class="r">${d.contacts.toLocaleString('it')}</td>
+      <td class="r">${d.converted.toLocaleString('it')}</td>
+      <td class="r">
+        <div class="conv-bar-wrap">
+          ${(cr*100).toFixed(1)}%
+          <div class="conv-bar" style="width:${barW}px"></div>
+        </div>
+      </td>
+      <td class="r">€ ${fmtEur(d.rev)}</td>
+      <td class="r">€ ${fmtEur(avg)}</td>
+    </tr>`;
+  }
+
+  function tableHeader() {
+    return `<thead><tr>
+      <th></th>
+      <th class="r">Contatti</th>
+      <th class="r">Convertiti</th>
+      <th class="r">Conv. %</th>
+      <th class="r">Fatturato €</th>
+      <th class="r">Scontrino medio</th>
+    </tr></thead>`;
+  }
+
+  function tableFooter(label, d) {
+    const cr = d.contacts > 0 ? d.converted/d.contacts : 0;
+    const avg = d.tx > 0 ? d.rev/d.tx : 0;
+    return `<tfoot><tr>
+      <td>${label}</td>
+      <td class="r">${d.contacts.toLocaleString('it')}</td>
+      <td class="r">${d.converted.toLocaleString('it')}</td>
+      <td class="r">${(cr*100).toFixed(1)}%</td>
+      <td class="r">€ ${fmtEur(d.rev)}</td>
+      <td class="r">€ ${fmtEur(avg)}</td>
+    </tr></tfoot>`;
+  }
+
+  // Monthly table
+  const months = Object.keys(byMonth).sort();
+  const maxRevMonth = Math.max(...months.map(m => byMonth[m].rev), 1);
+  const monthRows = months.map(m => {
+    const [y, mo] = m.split('-');
+    const label = mo ? MONTH_NAMES[parseInt(mo)-1] + " '" + (y||'').slice(2) : m;
+    return kpiRow(label, byMonth[m], maxRevMonth);
+  }).join('');
+
+  // Operator table — sorted by contacts desc
+  const ops = Object.keys(byOp).sort((a,b) => byOp[b].contacts - byOp[a].contacts);
+  const maxRevOp = Math.max(...ops.map(o => byOp[o].rev), 1);
+  const opRows = ops.map(op => kpiRow(op, byOp[op], maxRevOp)).join('');
+
+  const totals = {contacts: totalContacts, converted: totalMatched, tx: totalTx, rev: totalRev};
+
+  document.getElementById('analysisBlock').innerHTML = `
+    <div class="analysis-section">
+      <div class="section-title">Analisi per Mese</div>
+      <div class="table-wrap">
+        <table class="analysis-table">
+          ${tableHeader()}
+          <tbody>${monthRows}</tbody>
+          ${tableFooter('TOTALE', totals)}
+        </table>
+      </div>
+    </div>
+    <div class="analysis-section">
+      <div class="section-title">Analisi per Operatore</div>
+      <div class="table-wrap">
+        <table class="analysis-table">
+          ${tableHeader()}
+          <tbody>${opRows}</tbody>
+          ${tableFooter('TOTALE', totals)}
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function updatePeriodLabel() {
+  const rows = state.files.cc;
+  const map = state.colMaps.cc;
+  if (!rows || !map || !map.date) return;
+  const dates = rows.map(r => parseDate(r[map.date])).filter(Boolean).sort((a,b)=>a-b);
+  if (!dates.length) return;
+  const fmt = d => d.toLocaleDateString('it-IT', {month:'short', year:'numeric'});
+  const from = fmt(dates[0]);
+  const to = fmt(dates[dates.length-1]);
+  const label = from === to ? from : `${from} → ${to}`;
+  document.getElementById('periodLabel').textContent = label;
+}
+
+function fmtEur(n) {
+  return n.toLocaleString('it-IT', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+// ─── ANALYSIS TAB ─────────────────────────────────────────────────────────────
+let analysisSortCol = 'contacts';
+let analysisSortAsc = false;
+
+function renderAnalysis() {
+  if (!state.results) return;
+  const filterCh = document.getElementById('anaChannel').value;
+  const filterPd = document.getElementById('anaPeriod').value;
+
+  let rows = state.results;
+  if (filterCh) rows = rows.filter(r=>r.channel===filterCh);
+  if (filterPd) rows = rows.filter(r=>r.month===filterPd);
+
+  // Aggregate by operator
+  const byOp = {};
+  rows.forEach(r => {
+    if (!byOp[r.operator]) byOp[r.operator] = {operator:r.operator,contacts:0,transactions:0,revenue:0,retail:0,ecom:0};
+    const o = byOp[r.operator];
+    o.contacts++;
+    o.transactions += r.matched.length;
+    o.revenue += r.totalAmount;
+    o.retail += r.retailCount;
+    o.ecom += r.ecomCount;
+  });
+
+  let data = Object.values(byOp).map(o => ({
+    ...o,
+    convRate: o.contacts>0 ? o.transactions/o.contacts : 0,
+    avgOrder: o.transactions>0 ? o.revenue/o.transactions : 0
+  }));
+
+  // Sort
+  data.sort((a,b) => {
+    const v = analysisSortAsc ? 1 : -1;
+    if (typeof a[analysisSortCol]==='string') return v*(a[analysisSortCol].localeCompare(b[analysisSortCol]));
+    return v*(a[analysisSortCol]-b[analysisSortCol]);
+  });
+
+  const maxRev = Math.max(...data.map(d=>d.revenue),1);
+  const tbody = document.getElementById('tbodyAnalysis');
+  tbody.innerHTML = data.map(d => `
+    <tr>
+      <td class="hl">${d.operator}</td>
+      <td class="num">${d.contacts.toLocaleString('it')}</td>
+      <td class="num">${d.transactions.toLocaleString('it')}</td>
+      <td class="num" style="white-space:nowrap">
+        ${(d.convRate*100).toFixed(1)}%
+        <span class="pct-bar" style="display:inline-block;vertical-align:middle;width:${Math.min(d.convRate*100,100)*0.6}px"></span>
+      </td>
+      <td class="num">€ ${fmtEur(d.revenue)}</td>
+      <td class="num">€ ${fmtEur(d.avgOrder)}</td>
+
+    </tr>
+  `).join('');
+
+  state._analysisData = data;
+}
+
+function sortTable(tab, col) {
+  if (tab==='analysis') {
+    analysisSortAsc = analysisSortCol===col ? !analysisSortAsc : false;
+    analysisSortCol = col;
+    renderAnalysis();
+  }
+}
+
+function exportAnalysis() {
+  if (!state._analysisData) return;
+  const rows = [['Operatore','Contatti','Transazioni','Conv %','Fatturato €','Scontrino Medio','Retail','Ecom']];
+  state._analysisData.forEach(d => rows.push([d.operator,d.contacts,d.transactions,(d.convRate*100).toFixed(2),d.revenue.toFixed(2),d.avgOrder.toFixed(2),d.retail,d.ecom]));
+  downloadCSV(rows, 'analisi_operatori.csv');
+}
+
+// ─── MONTHLY TAB ──────────────────────────────────────────────────────────────
+function renderMonthly() {
+  if (!state.results) return;
+  const filterOp = document.getElementById('monOperator').value;
+  const filterCh = document.getElementById('monChannel').value;
+
+  let rows = state.results;
+  if (filterOp) rows = rows.filter(r=>r.operator===filterOp);
+  if (filterCh) rows = rows.filter(r=>r.channel===filterCh);
+
+  const byMonth = {};
+  rows.forEach(r => {
+    const m = r.month;
+    if (!m) return;
+    if (!byMonth[m]) byMonth[m] = {month:m,contacts:0,transactions:0,revenue:0};
+    byMonth[m].contacts++;
+    byMonth[m].transactions += r.matched.length;
+    byMonth[m].revenue += r.totalAmount;
+  });
+
+  const months = Object.keys(byMonth).sort();
+  const data = months.map(m => ({...byMonth[m], convRate: byMonth[m].contacts>0 ? byMonth[m].transactions/byMonth[m].contacts:0}));
+
+  const monthLabels = months.map(m => { const [y,mo]=m.split('-'); return MONTH_NAMES[parseInt(mo)-1]+" '"+y.slice(2); });
+
+  // Charts
+  drawBarLineChart('chartMonthly', monthLabels,
+    { label:'Contatti', data: data.map(d=>d.contacts), color:'#8a7a60' },
+    { label:'Conversioni', data: data.map(d=>d.transactions), color:'#3a6a4a' }
+  );
+  drawBarChart('chartRevenue', monthLabels, data.map(d=>d.revenue), '#3a4a3c');
+
+  // Table
+  const tbody = document.getElementById('tbodyMonthly');
+  tbody.innerHTML = data.map(d => `
+    <tr>
+      <td class="hl">${monthLabels[months.indexOf(d.month)]}</td>
+      <td class="num">${d.contacts}</td>
+      <td class="num">${d.transactions}</td>
+      <td class="num">${(d.convRate*100).toFixed(1)}%</td>
+      <td class="num">€ ${fmtEur(d.revenue)}</td>
+      <td class="num">€ ${fmtEur(d.transactions>0?d.revenue/d.transactions:0)}</td>
+    </tr>
+  `).join('');
+}
+
+function drawBarLineChart(id, labels, bar1, bar2) {
+  if (state.charts[id]) state.charts[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  state.charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: bar1.label, data: bar1.data, backgroundColor: bar1.color+'cc', borderColor: bar1.color, borderWidth: 1 },
+        { label: bar2.label, data: bar2.data, backgroundColor: bar2.color+'cc', borderColor: bar2.color, borderWidth: 1 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#5a5a50', font:{family:"'Gill Sans', sans-serif", size:10} } } },
+      scales: {
+        x: { ticks: { color: '#8a8880', font:{size:10,family:"'Gill Sans', sans-serif"} }, grid:{color:'#c8bfaf40'} },
+        y: { ticks: { color: '#8a8880', font:{size:10,family:"'Gill Sans', sans-serif"} }, grid:{color:'#c8bfaf60'} }
+      }
+    }
+  });
+}
+
+function drawBarChart(id, labels, data, color) {
+  if (state.charts[id]) state.charts[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  state.charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'€', data, backgroundColor: color+'88', borderColor: color, borderWidth:1 }] },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8a8880', font:{size:10,family:"'Gill Sans', sans-serif"} }, grid:{color:'#c8bfaf40'} },
+        y: { ticks: { color: '#8a8880', font:{size:10,family:"'Gill Sans', sans-serif"}, callback: v => '€'+fmtEur(v) }, grid:{color:'#c8bfaf60'} }
+      }
+    }
+  });
+}
+
+// ─── MATCHES TAB ──────────────────────────────────────────────────────────────
+const PAGE_SIZE = 50;
+
+function filterMatches() {
+  if (!state.results) return;
+  const q = (document.getElementById('matchSearch').value||'').toLowerCase();
+  const op = document.getElementById('matchOp').value;
+  const ch = document.getElementById('matchChan').value;
+  const type = document.getElementById('matchType').value;
+
+  let rows = state.results;
+  if (op) rows = rows.filter(r=>r.operator===op);
+  if (ch) rows = rows.filter(r=>r.channel===ch);
+  if (type==='matched') rows = rows.filter(r=>r.matched.length>0);
+  if (type==='unmatched') rows = rows.filter(r=>r.matched.length===0);
+  if (q) rows = rows.filter(r =>
+    r.email.includes(q) ||
+    r.operator.toLowerCase().includes(q) ||
+    r.caseNum.toLowerCase().includes(q) ||
+    r.matched.some(m=>m.order.toLowerCase().includes(q))
+  );
+
+  state.matchFiltered = rows;
+  state.matchPage = 1;
+  document.getElementById('matchCount').textContent = `${rows.length.toLocaleString('it')} righe`;
+  renderMatchPage();
+}
+
+function renderMatchPage() {
+  const rows = state.matchFiltered;
+  const start = (state.matchPage-1)*PAGE_SIZE;
+  const page = rows.slice(start, start+PAGE_SIZE);
+
+  const tbody = document.getElementById('tbodyMatches');
+  tbody.innerHTML = page.map(r => {
+    const hasMatch = r.matched.length>0;
+    const types = [...new Set(r.matched.map(m=>m.source))];
+    const badge = types.length ? '<span class="badge badge-web">Vendita</span>'
+      : '<span style="color:var(--text3)">—</span>';
+    return `<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td class="hl">${r.operator}</td>
+      <td><span class="badge badge-web" style="background:transparent;border:1px solid var(--border)">${r.channel}</span></td>
+      <td style="font-size:11px">${r.email}</td>
+      <td style="font-size:11px;color:var(--text3)">${r.caseNum||'—'}</td>
+      <td class="num">${r.matched.length||'—'}</td>
+      <td class="num">${r.totalAmount>0?'€ '+fmtEur(r.totalAmount):'—'}</td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+
+  // Pagination
+  const total = Math.ceil(rows.length/PAGE_SIZE);
+  const pag = document.getElementById('matchPagination');
+  pag.innerHTML = '';
+  if (total<=1) return;
+  const maxBtns = 7;
+  let pages = [];
+  if (total<=maxBtns) { for(let i=1;i<=total;i++) pages.push(i); }
+  else {
+    pages = [1];
+    if (state.matchPage>3) pages.push('…');
+    for(let i=Math.max(2,state.matchPage-1);i<=Math.min(total-1,state.matchPage+1);i++) pages.push(i);
+    if (state.matchPage<total-2) pages.push('…');
+    pages.push(total);
+  }
+  pages.forEach(p => {
+    const btn = document.createElement('div');
+    btn.className = 'page-btn' + (p===state.matchPage?' active':'');
+    btn.textContent = p;
+    if (p!=='…') btn.onclick = () => { state.matchPage=p; renderMatchPage(); };
+    pag.appendChild(btn);
+  });
+  const info = document.createElement('span');
+  info.className = 'page-info';
+  info.textContent = `Pagina ${state.matchPage} di ${total}`;
+  pag.appendChild(info);
+}
+
+function exportMatches() {
+  const rows = [['Data Contatto','Operatore','Canale','Email','Case N.','Acquisti','Fatturato €','Tipo']];
+  (state.matchFiltered||state.results||[]).forEach(r => {
+    const types = [...new Set(r.matched.map(m=>m.source))].join('+');
+    rows.push([fmtDate(r.date),r.operator,r.channel,r.email,r.caseNum||'',r.matched.length,r.totalAmount.toFixed(2),types||'—']);
+  });
+  downloadCSV(rows, 'dettaglio_match.csv');
+}
+
+// ─── UTILITIES ────────────────────────────────────────────────────────────────
+function setProgress(pct) {
+  document.getElementById('progressBar').style.width = pct+'%';
+}
+
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => t.className = '', 3200);
+}
+
+function downloadCSV(rows, filename) {
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function confirmReset() {
+  document.getElementById('resetModal').classList.add('open');
+}
+
+function doReset() {
+  document.getElementById('resetModal').classList.remove('open');
+  resetAll();
+}
+
+function resetAll() {
+  // Reset all files
+  ['cc','ecom'].forEach(t => {
+    state.files[t] = null;
+    state.colMaps[t] = {};
+    document.getElementById('card-'+t).classList.remove('loaded');
+    document.getElementById('status-'+t).className = 'card-status';
+    document.getElementById('status-'+t).textContent = '—';
+    document.getElementById('file-'+t).value = '';
+  });
+
+
+
+  // Clear results & state
+  state.results = null;
+  state._analysisData = null;
+  state.matchFiltered = [];
+  state.matchPage = 1;
+
+  // Clear quick stats
+  const qs = document.getElementById('quickStats');
+  qs.classList.add('results-hidden');
+  qs.innerHTML = '';
+
+  // Destroy charts
+  Object.values(state.charts).forEach(c => { try { c.destroy(); } catch(e){} });
+  state.charts = {};
+
+  // Clear table bodies
+  ['tbodyAnalysis','tbodyMonthly','tbodyMatches'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.innerHTML = '';
+  });
+  const pag = document.getElementById('matchPagination');
+  if (pag) pag.innerHTML = '';
+
+  // Reset all filter selects to first option only
+  ['anaChannel','anaPeriod','monOperator','monChannel','matchOp','matchChan','matchType'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { const first = el.options[0]?.outerHTML || ''; el.innerHTML = first; }
+  });
+
+  // Clear search + count
+  const search = document.getElementById('matchSearch');
+  if (search) search.value = '';
+  const mc = document.getElementById('matchCount');
+  if (mc) mc.textContent = '';
+
+  // Remove import report block if present
+  const rep = document.getElementById('importReport');
+  if (rep) rep.remove();
+
+  // Buttons
+  document.getElementById('btnReset').style.display = 'none';
+  document.getElementById('btnRun').disabled = true;
+  document.getElementById('runInfo').textContent = 'Carica i file vendite per procedere';
+
+  showTab('import');
+  showToast('Reset completato — tutto azzerato', 'success');
+}
+
+// ─── PRELOADED SALESFORCE DATA ────────────────────────────────────────────────
+
+
+
+
+
+</script>
+</body>
+</html>
